@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API from '../services/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,30 +13,15 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8081/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Save typed email to localStorage so Navbar can read it
-        const userEmail = data.email || email;
-        localStorage.setItem('email', userEmail);
-        localStorage.setItem('role', data.role || 'APPLICANT');
-        localStorage.setItem('token', data.token || 'dummy-jwt-token-123456');
-
-        navigate('/jobs');
-      } else {
-        const errorMsg = await response.text();
-        setError(errorMsg || 'Invalid email or password');
-      }
+      const { data } = await API.post('/auth/login', { email, password });
+      const userEmail = data.email || email;
+      localStorage.setItem('email', userEmail);
+      localStorage.setItem('role', data.role || 'APPLICANT');
+      localStorage.setItem('token', data.token || '');
+      localStorage.setItem('user', JSON.stringify(data));
+      navigate('/jobs');
     } catch (err) {
-      setError('Unable to connect to backend server on port 8081');
+      setError(err.response?.data || 'Unable to connect to the JobConnect server');
     }
   };
 

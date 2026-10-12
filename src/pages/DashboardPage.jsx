@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import API from '../services/api';
 
 const DashboardPage = () => {
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -48,8 +49,8 @@ const DashboardPage = () => {
 
     // 2. Fetch from Spring Boot backend to restore data even after logout
     if (activeEmail && activeEmail !== 'User') {
-      fetch(`http://localhost:8081/api/applications?email=${encodeURIComponent(activeEmail)}`)
-        .then((res) => res.json())
+      API.get('/jobs/applications/me', { params: { email: activeEmail } })
+        .then((res) => res.data)
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
             setAppliedJobs(data);
@@ -57,7 +58,7 @@ const DashboardPage = () => {
             localStorage.setItem(userStorageKey, JSON.stringify(data));
           }
         })
-        .catch(() => console.log('Backend offline, displaying cached applications'));
+        .catch((error) => console.error('Unable to refresh applications; showing cached applications', error));
     }
   }, [user.email]);
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../services/api';
 
 const JobsPage = () => {
   const defaultJobs = [
@@ -73,14 +74,16 @@ const JobsPage = () => {
       console.log('Error reading applied jobs for active user');
     }
 
-    fetch('http://localhost:8081/api/jobs')
-      .then((res) => res.json())
+    API.get('/jobs')
+      .then((res) => res.data)
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setJobs(data);
         }
       })
-      .catch(() => console.log('Using default jobs fallback'));
+      .catch((error) => {
+        console.error('Unable to load jobs; showing default listings', error);
+      });
   }, [userStorageKey]);
 
   const openApplyModal = (job) => {
@@ -135,16 +138,9 @@ const JobsPage = () => {
       console.log('Error saving user applied job details');
     }
 
-    fetch('http://localhost:8081/api/applications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(applicationData)
-    })
-      .then((res) => res.json())
-      .then((data) => console.log('Successfully saved to Spring Boot Database:', data))
-      .catch(() => console.log('Backend sync offline - application saved to user session'));
+    API.post('/applications', applicationData)
+      .then((response) => console.log('Successfully saved to Spring Boot Database:', response.data))
+      .catch((error) => console.error('Backend application sync failed', error));
 
     setNotification(`Application for "${job.title}" submitted successfully!`);
     setApplyingJob(null);
